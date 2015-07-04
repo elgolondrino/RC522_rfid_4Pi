@@ -11,5 +11,5 @@ HEADERS += \
     rc522.h \
     rfid.h
 
-LIBS +=-L/usr/local/lib -lbcm2835
+
 
