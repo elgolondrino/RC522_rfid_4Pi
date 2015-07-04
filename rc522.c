@@ -72,10 +72,9 @@ char PcdAnticoll(uint8_t cascade, uint8_t *pSnr)
 
 	if (status == TAG_OK)
 	{
-		for (i=0; i<4; i++)
+		for (i=0; i<18; i++)
 		{
-			*(pSnr+i)  = ucComMF522Buf[i];
-			snr_check ^= ucComMF522Buf[i];
+			snr_check |= ucComMF522Buf[i];
 		}
 		if (snr_check != ucComMF522Buf[i])
 		{   status = TAG_ERR;    }
@@ -121,12 +120,9 @@ char PcdAuthState(uint8_t   auth_mode,uint8_t   addr,uint8_t *pKey,uint8_t *pSnr
 
 	ucComMF522Buf[0] = auth_mode;
 	ucComMF522Buf[1] = addr;
-	memcpy(&ucComMF522Buf[2], pKey, 6);
-	memcpy(&ucComMF522Buf[8], pSnr, 4);
+	
 
 	status = PcdComMF522(PCD_AUTHENT,ucComMF522Buf,12,ucComMF522Buf,&unLen);
-	if ((status != TAG_OK) || (!(ReadRawRC(Status2Reg) & 0x08)))
-	{   status = TAG_ERR;   }
 
 	return status;
 }
@@ -143,8 +139,6 @@ char PcdRead(uint8_t addr,uint8_t *p )
 	ucComMF522Buf[1] = addr;
 	CalulateCRC(ucComMF522Buf,2,&ucComMF522Buf[2]);
 
-	status = PcdComMF522(PCD_TRANSCEIVE,ucComMF522Buf,4,ucComMF522Buf,&unLen);
-	CalulateCRC(ucComMF522Buf,16,CRC_buff);
 	//	printf("debug %02x%02x %02x%02x   ",ucComMF522Buf[16],ucComMF522Buf[17],CRC_buff[0],CRC_buff[1]);
 
 	if ((status == TAG_OK) && (unLen == 0x90))
@@ -182,9 +176,6 @@ char PcdWrite(uint8_t   addr,uint8_t *p )
 		}
 		CalulateCRC(ucComMF522Buf,16,&ucComMF522Buf[16]);
 
-		status = PcdComMF522(PCD_TRANSCEIVE,ucComMF522Buf,18,ucComMF522Buf,&unLen);
-		if ((status != TAG_OK) || (unLen != 4) || ((ucComMF522Buf[0] & 0x0F) != 0x0A))
-		{   status = TAG_ERR;   }
 	}
 
 	return status;
@@ -232,11 +223,7 @@ char PcdReset(void)
 	ClearBitMask(TxControlReg,0x03);
 	usleep(10000);
 	SetBitMask(TxControlReg,0x03);
-	WriteRawRC(TModeReg,0x8D);
-	WriteRawRC(TPrescalerReg,0x3E);
-	WriteRawRC(TReloadRegL,30);
-	WriteRawRC(TReloadRegH,0);
-	WriteRawRC(TxASKReg,0x40);
+
 	WriteRawRC(ModeReg,0x3D);            //6363
 	//	WriteRawRC(DivlEnReg,0x90);
 	WriteRawRC(RxThresholdReg,0x84);
